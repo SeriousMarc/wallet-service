@@ -1,0 +1,49 @@
+@startuml
+
+entity "User" as user {
+  *id : <<PK>>
+  --
+  *name: number [unique]
+}
+
+entity "Wallet" as wallet {
+  *id : <<PK>>
+  --
+  *user_id: <<FK>>
+  ..
+  *amount: number
+  ..
+  *currency: Currency <<enum>>
+}
+
+entity "Transaction" as transaction {
+  *id : number
+  --
+  *is_success: bool
+  ..
+  *stamp_datetime: datetime
+  ..
+  *type: TransactionType <<enum>>
+  ..
+  *user_id: <<FK>>
+}
+
+entity "Currency" as currency {
+  *enum
+  --
+  -USD: 1
+}
+
+entity "TransactionType" as transaction_type {
+  *enum
+  --
+  -POP_UP: 1
+  -TRANSFER: 2
+}
+
+user -- wallet
+wallet -- transaction
+wallet -- currency
+transaction -- transaction_type
+
+@enduml
