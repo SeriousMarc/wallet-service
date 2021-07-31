@@ -1,0 +1,4 @@
+[virtualenvs]
+# force to create env in project dir
+create = true
+in-project = true
