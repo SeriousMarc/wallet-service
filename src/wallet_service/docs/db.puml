@@ -21,11 +21,13 @@ entity "Transaction" as transaction {
   --
   *is_success: bool
   ..
-  *stamp_datetime: datetime
+  *stamp: DateTime
   ..
   *type: TransactionType <<enum>>
   ..
-  *user_id: <<FK>>
+  -from_wallet: <<FK>>
+  ..
+  *to_wallet: <<FK>>
 }
 
 entity "Currency" as currency {

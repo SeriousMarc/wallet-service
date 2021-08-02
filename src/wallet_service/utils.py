@@ -16,9 +16,8 @@ def session(f):
             try:
                 result = await f(a_session, *args, **kwargs)
                 await a_session.commit()
-            except SQLAlchemyError:
+            except SQLAlchemyError as e:
                 await a_session.rollback()
-                raise SQLAlchemyError
 
             return result
     return wrapper

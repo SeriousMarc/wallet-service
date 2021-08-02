@@ -2,66 +2,89 @@
 View Business Logic
 """
 from asyncio import gather
+from http import HTTPStatus
 
 from fastapi import HTTPException
 
-from wallet_service.repository import TestRepository, BaseRepository, WalletRepository
-from wallet_service.schemas import Test, User as UserSchema, WalletPopUp, Transfer, TransferWallets
-from wallet_service.models import User, Wallet
+from wallet_service.repository import UserRepository, WalletRepository, TransactionRepository
+from wallet_service.schemas import (
+    User,
+    UserWallet,
+    WalletPopUp,
+    Wallet as _Wallet,
+    Transfer,
+    TransferWallets
+)
+from wallet_service.models import Wallet, TransactionType
 from wallet_service.utils import session
 
 
 @session
-async def create_test_view(a_session, test: Test) -> Test:
-    async with a_session.begin():
-        repo = TestRepository(a_session)
-
-        return Test(**(await repo.create_test(test.dict())))
-
-
-@session
-async def create_client_and_wallet_view(a_session, user: UserSchema) -> UserSchema:
-    user_repo = BaseRepository(a_session, User)
+async def create_client_and_wallet_view(a_session, payload: User) -> UserWallet:
+    user_repo = UserRepository(a_session)
     wallet_repo = WalletRepository(a_session)
 
-    user = await user_repo.create(user.dict(exclude_unset=True))
+    user = await user_repo.create(payload.dict(exclude_unset=True))
     wallet = await wallet_repo.create({'user_id': user.id})
 
-    return UserSchema(**user)
-
+    return UserWallet(user=user, wallet=wallet)
 
 
 @session
-async def pop_up_wallet_view(a_session, payload: WalletPopUp) -> WalletPopUp:
+async def pop_up_wallet_view(a_session, payload: WalletPopUp) -> _Wallet:
     wallet_repo = WalletRepository(a_session)
+    trx_repo = TransactionRepository(a_session)
 
-    wallet = await wallet_repo.update(
-        payload.user_id,
-        {'amount': Wallet.amount + payload.amount}
+    exists = await wallet_repo.get_balance(payload.wallet_id)
+
+    if exists is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
+
+    wallet, trx = await gather(
+        wallet_repo.update(
+            payload.wallet_id,
+            {'balance': Wallet.balance + payload.amount}
+        ),
+        trx_repo.create({
+            'amount': payload.amount,
+            'to_wallet': payload.wallet_id,
+            'type': TransactionType.POP_UP.value,
+            'is_success': True
+        }),
     )
 
-    return WalletPopUp(**wallet)
+    return _Wallet(**wallet)
 
 
 @session
 async def transfer_btw_wallets_view(a_session, payload: Transfer) -> TransferWallets:
     wallet_repo = WalletRepository(a_session)
+    trx_repo = TransactionRepository(a_session)
 
-    amount = await wallet_repo.get_amount(payload.from_user)
-
-    if amount is None or payload.amount > amount.amount or amount.amount <= 0:
-        raise HTTPException(status_code=402, detail="Inappropriate wallet balance")
-
-    from_wallet, to_wallet = await gather(
-        wallet_repo.update(
-            payload.from_user,
-            {'amount': Wallet.amount - payload.amount}
-        ),
-        wallet_repo.update(
-            payload.to_user,
-            {'amount': Wallet.amount + payload.amount}
-        )
+    from_balance, to_balance = await gather(
+        wallet_repo.get_balance(payload.from_wallet),
+        wallet_repo.get_balance(payload.to_wallet),
     )
 
+    if from_balance is None or to_balance is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
+    elif payload.amount > from_balance.balance or from_balance.balance <= 0:
+        raise HTTPException(status_code=HTTPStatus.PAYMENT_REQUIRED.value, detail='Inappropriate transfer amount')
+
+    from_wallet, to_wallet, _ = await gather(
+        wallet_repo.update(
+            payload.from_wallet,
+            {'balance': Wallet.balance - payload.amount}
+        ),
+        wallet_repo.update(
+            payload.to_wallet,
+            {'balance': Wallet.balance + payload.amount}
+        ),
+        trx_repo.create({
+            **payload.dict(include={'from_wallet', 'to_wallet', 'amount'}),
+            'type': TransactionType.TRANSFER.value,
+            'is_success': True
+        }),
+    )
 
     return TransferWallets(from_wallet=from_wallet, to_wallet=to_wallet)
