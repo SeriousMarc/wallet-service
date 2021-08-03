@@ -24,11 +24,11 @@ async def create_user(payload: User) -> UserWallet:
     return await create_client_and_wallet_view(payload)
 
 
-@router.patch(f'{v1}/wallets/pop-up')
+@router.put(f'{v1}/wallets/pop-up')
 async def pop_up_wallet(payload: WalletPopUp) -> Wallet:
     return await pop_up_wallet_view(payload)
 
 
-@router.patch(f'{v1}/wallets/transfer')
+@router.put(f'{v1}/wallets/transfer')
 async def wallets_transfer(payload: Transfer) -> TransferWallets:
     return await transfer_btw_wallets_view(payload)

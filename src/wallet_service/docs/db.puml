@@ -3,7 +3,7 @@
 entity "User" as user {
   *id : <<PK>>
   --
-  *name: number [unique]
+  *username: number [unique]
 }
 
 entity "Wallet" as wallet {
@@ -11,7 +11,7 @@ entity "Wallet" as wallet {
   --
   *user_id: <<FK>>
   ..
-  *amount: number
+  *balance: decimal
   ..
   *currency: Currency <<enum>>
 }
@@ -28,6 +28,8 @@ entity "Transaction" as transaction {
   -from_wallet: <<FK>>
   ..
   *to_wallet: <<FK>>
+  ..
+  *amount: decimal
 }
 
 entity "Currency" as currency {

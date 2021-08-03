@@ -39,6 +39,8 @@ async def pop_up_wallet_view(a_session, payload: WalletPopUp) -> _Wallet:
 
     if exists is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
+    elif payload.amount <= 0:
+        raise HTTPException(status_code=HTTPStatus.PAYMENT_REQUIRED.value, detail='Inappropriate transfer amount')
 
     wallet, trx = await gather(
         wallet_repo.update(
