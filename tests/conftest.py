@@ -1,24 +1,31 @@
 """
 Tests pre configuration
 """
+import asyncio
 import pytest
 from httpx import AsyncClient
-
+#
 from wallet_service.app import app
 from wallet_service.utils import init_models, drop_models
 
 BASE_URL = "http://localhost:8000"
 
 
-@pytest.fixture(scope='session', autouse=True)
-async def startup():
-    async with AsyncClient(app=app, base_url=BASE_URL):
-        await drop_models()
-        await init_models()
+@pytest.fixture(scope='session')
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+
+
+@pytest.fixture(autouse=True)
+async def db_wrapper():
+    await init_models()
+    yield
+    await drop_models()
 
 
 @pytest.fixture
-async def test_client() -> AsyncClient:
+async def async_client() -> AsyncClient:
     async with AsyncClient(app=app, base_url=BASE_URL) as ac:
         yield ac
 
