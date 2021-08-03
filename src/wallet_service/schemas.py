@@ -27,6 +27,10 @@ class WalletPopUp(BaseModel):
     amount: Decimal
 
 
+class Token(BaseModel):
+    token: bytes
+
+
 class Transfer(BaseModel):
     from_wallet: int
     to_wallet: int

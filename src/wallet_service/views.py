@@ -12,11 +12,13 @@ from wallet_service.schemas import (
     UserWallet,
     WalletPopUp,
     Wallet as _Wallet,
+    Token,
     Transfer,
     TransferWallets
 )
+from wallet_service import SECRET
 from wallet_service.models import Wallet, TransactionType
-from wallet_service.utils import session
+from wallet_service.utils import session, dencrypt_payload, validate_payload
 
 
 @session
@@ -59,9 +61,19 @@ async def pop_up_wallet_view(a_session, payload: WalletPopUp) -> _Wallet:
 
 
 @session
-async def transfer_btw_wallets_view(a_session, payload: Transfer) -> TransferWallets:
+async def transfer_btw_wallets_view(a_session, token: Token) -> TransferWallets:
     wallet_repo = WalletRepository(a_session)
     trx_repo = TransactionRepository(a_session)
+
+    payload = dencrypt_payload(SECRET, token.token)
+
+    if payload is None:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST.value, detail='Invalid token')
+
+    payload = validate_payload(payload)
+
+    if payload is None:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST.value, detail='Invalid payload')
 
     from_balance, to_balance = await gather(
         wallet_repo.get_balance(payload.from_wallet),
@@ -71,7 +83,10 @@ async def transfer_btw_wallets_view(a_session, payload: Transfer) -> TransferWal
     if from_balance is None or to_balance is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
     elif payload.amount > from_balance.balance or from_balance.balance <= 0:
-        raise HTTPException(status_code=HTTPStatus.PAYMENT_REQUIRED.value, detail='Inappropriate transfer amount')
+        raise HTTPException(
+            status_code=HTTPStatus.PAYMENT_REQUIRED.value,
+            detail='Inappropriate transfer amount'
+        )
 
     from_wallet, to_wallet, _ = await gather(
         wallet_repo.update(
@@ -89,4 +104,5 @@ async def transfer_btw_wallets_view(a_session, payload: Transfer) -> TransferWal
         }),
     )
 
+    # TODO hide wallets and return 204 content
     return TransferWallets(from_wallet=from_wallet, to_wallet=to_wallet)

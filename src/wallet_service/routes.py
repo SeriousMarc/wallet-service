@@ -13,7 +13,7 @@ from wallet_service.views import (
     pop_up_wallet_view,
     transfer_btw_wallets_view,
 )
-from wallet_service.schemas import User, UserWallet, WalletPopUp, Wallet, Transfer, TransferWallets
+from wallet_service.schemas import User, UserWallet, WalletPopUp, Wallet, Token, TransferWallets
 
 router = APIRouter(redirect_slashes=False)
 v1 = '/v1'
@@ -30,5 +30,5 @@ async def pop_up_wallet(payload: WalletPopUp) -> Wallet:
 
 
 @router.put(f'{v1}/wallets/transfer')
-async def wallets_transfer(payload: Transfer) -> TransferWallets:
-    return await transfer_btw_wallets_view(payload)
+async def wallets_transfer(token: Token) -> TransferWallets:
+    return await transfer_btw_wallets_view(token)

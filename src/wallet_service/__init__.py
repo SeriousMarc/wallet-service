@@ -1,3 +1,7 @@
+import os
+
+SECRET = os.getenv('SECRET', '')
+
 # TODO
 #   1. change ID to UUID
 #   2. transaction wrapper around wallet operations as Deco or DI
