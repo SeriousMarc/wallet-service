@@ -1,20 +1,20 @@
-version: '3.8'
+version: "3.9"
+
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - db
+  db:
+    env_file:
+      - .env
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+  web:
+    env_file:
+      - ./.env
+    build: .
+    command: python -m wallet_service.app
     volumes:
       - .:/workdir
     ports:
       - "8000:8000"
-    environment:
-      - DB_URI=postgresql+asyncpg://test:test@db:5432/test
-  db:
-    image: library/postgres:10-alpine
-    environment:
-      - POSTGRES_USER=test
-      - POSTGRES_DB=test
-      - POSTGRES_PASSWORD=test
+    depends_on:
+      - db

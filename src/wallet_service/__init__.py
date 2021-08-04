@@ -1,6 +1,6 @@
 import os
 
-SECRET = os.getenv('SECRET', b'')
+SECRET = os.getenv('SECRET', '')
 
 # TODO
 #   1. change ID to UUID

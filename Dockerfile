@@ -9,6 +9,4 @@ RUN poetry config virtualenvs.create false --local && \
     poetry config virtualenvs.in-project false --local && \
     poetry install
 
-CMD python -m wallet_service.app
-
-# todo setup compose and docker to run app and db
+#CMD python -m wallet_service.app

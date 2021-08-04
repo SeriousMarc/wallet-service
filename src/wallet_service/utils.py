@@ -1,7 +1,7 @@
 """
 App Utility
 """
-import simplejson as json
+import json
 
 from contextlib import suppress
 from json import JSONDecodeError
@@ -52,14 +52,14 @@ def dencrypt_payload(key: bytes, token: bytes) -> dict:
     with suppress(TypeError, InvalidToken, JSONDecodeError):
         f = Fernet(key)
 
-        return json.loads(f.decrypt(token), use_decimal=True)
+        return json.loads(f.decrypt(token))
 
 
 def encrypt_payload(key: bytes, payload: dict) -> bytes:
     with suppress(TypeError, InvalidSignature, JSONDecodeError):
         f = Fernet(key)
 
-        return f.encrypt(json.dumps(payload, use_decimal=True).encode('utf-8'))
+        return f.encrypt(json.dumps(payload, default=str).encode('utf-8'))
 
 
 def validate_payload(payload: dict) -> Transfer:
