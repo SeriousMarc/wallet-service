@@ -1,18 +1,23 @@
 [tool.poetry]
 name = "wallet-service"
-version = "0.0.0"
+version = "1.0.0"
 description = "API for Wallet"
 authors = ["Insane Guru"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10.0"
-uvicorn = "^0.14.0"
-fastapi = "^0.68.0"
+
 asyncpg = "^0.23.0"
+fastapi = "^0.68.0"
+pydantic = "^1.8.2"
 SQLAlchemy = "^1.4.22"
+uvicorn = "^0.14.0"
+cryptography = "^3.4.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
+pytest-asyncio = "^0.15.1"
+httpx = "^0.18.2"
 
 [tool.poetry-dynamic-versioning]
 enable = true
