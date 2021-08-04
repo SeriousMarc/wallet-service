@@ -26,22 +26,5 @@ async def startup_event():
 #     await drop_models()
 
 
-# @app.middleware('http')
-# async def validation_middleware(request: Request, call_next):
-#     try:
-#         return await call_next(request)
-#     except ValidationError as e:
-#         return HTTPException(
-#             status_code=422,
-#             detail=str(e),
-#             headers={"X-Error": "ValidationError"}
-#         )
-#     except SQLAlchemyError as e:
-#         return HTTPException(
-#             status_code=500,
-#             detail=str(e),
-#             headers={"X-Error": "DB Validation Error"}
-#         )
-
 if __name__ == '__main__':
     uvicorn.run(app, port=8000, host='127.0.0.1')

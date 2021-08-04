@@ -2,6 +2,7 @@
 View Business Logic
 """
 from asyncio import gather
+from decimal import Decimal
 from http import HTTPStatus
 
 from fastapi import HTTPException
@@ -20,6 +21,8 @@ from wallet_service import SECRET
 from wallet_service.models import Wallet, TransactionType
 from wallet_service.utils import session, dencrypt_payload, validate_payload
 
+
+ZERO = Decimal('0')
 
 @session
 async def create_client_and_wallet_view(a_session, payload: User) -> UserWallet:
@@ -41,7 +44,7 @@ async def pop_up_wallet_view(a_session, payload: WalletPopUp) -> _Wallet:
 
     if exists is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
-    elif payload.amount <= 0:
+    elif payload.amount <= ZERO:
         raise HTTPException(status_code=HTTPStatus.PAYMENT_REQUIRED.value, detail='Inappropriate transfer amount')
 
     wallet, trx = await gather(
@@ -82,7 +85,11 @@ async def transfer_btw_wallets_view(a_session, token: Token) -> TransferWallets:
 
     if from_balance is None or to_balance is None:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND.value, detail='Invalid wallet')
-    elif payload.amount > from_balance.balance or from_balance.balance <= 0:
+    elif any([
+        payload.amount <= ZERO,
+        (payload.amount - from_balance.balance) > ZERO,
+        from_balance.balance <= ZERO
+    ]):
         raise HTTPException(
             status_code=HTTPStatus.PAYMENT_REQUIRED.value,
             detail='Inappropriate transfer amount'

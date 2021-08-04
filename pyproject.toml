@@ -12,6 +12,8 @@ fastapi = "^0.68.0"
 pydantic = "^1.8.2"
 SQLAlchemy = "^1.4.22"
 uvicorn = "^0.14.0"
+cryptography = "^3.4.7"
+simplejson = "^3.17.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

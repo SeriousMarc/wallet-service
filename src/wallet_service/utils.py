@@ -1,16 +1,18 @@
 """
 App Utility
 """
-import orjson as json
+import simplejson as json
 
 from contextlib import suppress
+from json import JSONDecodeError
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet, InvalidToken, InvalidSignature
 from pydantic.error_wrappers import ValidationError
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 
+from wallet_service import SECRET
 from wallet_service.config import engine, Base
 from wallet_service.schemas import Transfer
 
@@ -47,19 +49,19 @@ async def drop_models():
 
 
 def dencrypt_payload(key: bytes, token: bytes) -> dict:
-    payload = None
-
-    with suppress(TypeError, InvalidToken):
+    with suppress(TypeError, InvalidToken, JSONDecodeError):
         f = Fernet(key)
-        payload = json.loads(f.decrypt(token))
 
-    return payload
+        return json.loads(f.decrypt(token), use_decimal=True)
+
+
+def encrypt_payload(key: bytes, payload: dict) -> bytes:
+    with suppress(TypeError, InvalidSignature, JSONDecodeError):
+        f = Fernet(key)
+
+        return f.encrypt(json.dumps(payload, use_decimal=True).encode('utf-8'))
 
 
 def validate_payload(payload: dict) -> Transfer:
-    transfer = None
-
     with suppress(TypeError, ValidationError):
-        transfer = Transfer(**payload)
-
-    return transfer
+        return Transfer(**payload)
